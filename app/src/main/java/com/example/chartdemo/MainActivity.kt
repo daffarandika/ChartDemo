@@ -16,12 +16,12 @@ class MainActivity : AppCompatActivity() {
             ChartPoint(100f,400f),
             ChartPoint(160f,300f),
             ChartPoint(200f,400f),
-            ChartPoint(160f,390f),
-            ChartPoint(100f,290f),
-            ChartPoint(200f,580f),
-            ChartPoint(200f,410f),
-            ChartPoint(200f,480f),
-            ChartPoint(200f,270f),
+            ChartPoint(210f,390f),
+            ChartPoint(220f,290f),
+            ChartPoint(270f,580f),
+            ChartPoint(278f,410f),
+            ChartPoint(290f,480f),
+            ChartPoint(312f,270f),
         ))
         binding.cust.submitLine(line)
     }

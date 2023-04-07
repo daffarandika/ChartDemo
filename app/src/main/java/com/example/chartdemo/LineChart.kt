@@ -1,5 +1,6 @@
 package com.example.chartdemo
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
@@ -14,6 +15,7 @@ class LineChart @JvmOverloads constructor(
     defStyle: Int = 0
 ): View(context, attributeSet, defStyle) {
     private lateinit var line: ChartLine
+//    private var equalizeXAxis: Boolean = context.obtainStyledAttributes(attributeSet, R.styleable.LineChart, defStyle, 0).getBoolean(R.styleable.LineChart.equalize)
     fun submitLine(line: ChartLine) {
         this.line = line
     }
@@ -36,24 +38,39 @@ class LineChart @JvmOverloads constructor(
             style = Paint.Style.STROKE
         }
 
-        val minY = line.points.map {point ->
-            point.y
-        }.min()
+        val minX = line.points.minOf{ point ->
+            point.x
+        }
 
-        val maxY = line.points.map {point ->
-            point.y
-        }.max()
+        val maxX = line.points.maxOf { point ->
+            point.x
+        }
 
-        val plotStartX = 100f
-        val plotWidth = canvas.width - 50f
-        for (i in 0 until line.points.size - 1) {
-            val point = line.points[i]
-            val nextPoint = line.points[i+1]
+        val minY = line.points.minOf { point ->
+            point.y
+        }
+
+        val maxY = line.points.maxOf { point ->
+            point.y
+        }
+
+        val adjustedLine: ChartLine = ChartLine(line.points.map {oldPoint ->
+            ChartPoint(
+                ((maxX - minX) / canvas.width) * 2 * oldPoint.x,
+                ((maxY - minY) / canvas.width) * 2 * oldPoint.y
+            )
+        })
+
+//        val plotStartX = 100f
+//        val plotWidth = canvas.width - 50f
+        for (i in 0 until adjustedLine.points.size - 1) {
+            val point = adjustedLine.points[i]
+            val nextPoint = adjustedLine.points[i+1]
             canvas.drawLine(
-                (plotWidth / (line.points.size.toFloat() - 1)) * (i) + plotStartX,
-                (minY / maxY) * point.y,
-                (plotWidth / (line.points.size.toFloat() - 1)) * (i+1) + plotStartX,
-                (minY / maxY) * nextPoint.y,
+                point.x,
+                point.y,
+                nextPoint.x,
+                nextPoint.y,
                 linePaint)
 //            canvas.drawCircle((plotWidth / (line.points.size.toFloat() - 1)) * (i) + plotStartX, point.y, 5f, pointStyle)
 //            if (i == line.points.size - 1) {
