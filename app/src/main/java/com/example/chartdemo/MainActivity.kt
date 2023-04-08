@@ -10,6 +10,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        supportActionBar?.hide()
         val line = ChartLine(listOf(
             ChartPoint(0f,120f),
             ChartPoint(100f,150f),
@@ -24,10 +25,17 @@ class MainActivity : AppCompatActivity() {
             ChartPoint(100f,150f),
             ChartPoint(160f,300f),
             ChartPoint(270f,580f),
+            ChartPoint(270f,150f),
+            ChartPoint(270f,80f),
+            ChartPoint(0f,120f),
+            ChartPoint(160f,300f),
+            ChartPoint(100f,150f),
+            ChartPoint(160f,300f),
+            ChartPoint(270f,580f),
             ChartPoint(270f,80f),
             ChartPoint(0f,120f),
             ChartPoint(0f,120f),
-            ChartPoint(0f,120f),
+            ChartPoint(0f,0f),
             ChartPoint(100f,150f),
             ChartPoint(160f,300f),
         ))

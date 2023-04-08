@@ -1,6 +1,8 @@
 package com.example.chartdemo
 
 import android.annotation.SuppressLint
+import android.content.ClipData
+import android.content.ClipDescription
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
@@ -8,7 +10,12 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.util.AttributeSet
 import android.util.Log
+import android.view.DragEvent
+import android.view.MotionEvent
 import android.view.View
+import android.widget.Toast
+import androidx.constraintlayout.widget.ConstraintSet.Motion
+import kotlin.math.round
 
 class LineChart @JvmOverloads constructor(
     context: Context,
@@ -16,6 +23,8 @@ class LineChart @JvmOverloads constructor(
     defStyle: Int = 0
 ): View(context, attributeSet, defStyle) {
     private lateinit var line: ChartLine
+    private var touchX: Float? = -1f
+    private var listener: OnClickListener? = null
     private var xmlArgs = context.obtainStyledAttributes(
         attributeSet,
         R.styleable.LineChart,
@@ -76,19 +85,48 @@ class LineChart @JvmOverloads constructor(
             )
         })
 
+        if (touchX != null) {
+            canvas.drawLine(
+                touchX!!,
+                0f,
+                touchX!!,
+                rectLength.toFloat(),
+                lineTransparentPaint
+            )
+            Log.e(TAG, "cok touchX: $touchX", )
+            Log.e(TAG, "cok touchX: $touchX line X vals: ${
+                List(line.points.size) { index ->
+                    ((index * rectLength).toFloat()/(adjustedLine.points.size - 1))
+                }
+            }")
+            if (round(touchX!!) in List(adjustedLine.points.size) { index ->
+                    round(((index * rectLength).toFloat()/(adjustedLine.points.size - 1)))
+            }) {
+//                canvas.drawCircle(
+//                    touchX!!,
+////                    line.points.any {
+////                        (round(it.x) == round(touchX!!))
+////                    },
+//                    10f,
+//                    pointStyle
+//                )
+                //TODO: touch at index
+                Log.e(TAG, "onDraw: yes", )
+                canvas.drawCircle(
+                    touchX!!,
+                    touchX!!,
+                    10f,
+                    pointStyle
+                )
+            }
+        }
+
         if (equalizeXAxis) {
             for (i in 0 until adjustedLine.points.size - 1) {
                 val point = adjustedLine.points[i]
                 val nextPoint = adjustedLine.points[i+1]
                 Log.e(TAG, "val $i / ${adjustedLine.points.size} * $rectLength", )
                 Log.e(TAG, "onDraw start: ${((i * rectLength)/adjustedLine.points.size).toFloat()}", )
-                canvas.drawLine(
-                    ((i * rectLength).toFloat()/(adjustedLine.points.size - 1)),
-                    0f,
-                    ((i * rectLength).toFloat()/(adjustedLine.points.size - 1)),
-                    rectLength.toFloat(),
-                    lineTransparentPaint
-                )
                 canvas.drawLine(
                     ((i * rectLength).toFloat()/(adjustedLine.points.size - 1)),
                     point.y,
@@ -106,23 +144,21 @@ class LineChart @JvmOverloads constructor(
                     nextPoint.x,
                     nextPoint.y,
                     linePaint)
-                canvas.drawLine(
-                    ((i * rectLength).toFloat()/(adjustedLine.points.size - 1)),
-                    0f,
-                    ((i * rectLength).toFloat()/(adjustedLine.points.size - 1)),
-                    rectLength.toFloat(),
-                    lineTransparentPaint
-                )
             }
         }
         canvas.drawRect(rect, pointStyle)
-        canvas.drawCircle(
-            ((1 * rectLength)/adjustedLine.points.size).toFloat(),
-            ((1 * rectLength)/2).toFloat(),
-            10f,
-            pointStyle
-        )
     }
+
+    @SuppressLint("ClickableViewAccessibility")
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        touchX = event.x
+        if (event.action == MotionEvent.ACTION_UP) {
+            touchX = null
+        }
+        invalidate()
+        return true
+    }
+
     companion object {
         private const val TAG = "LineChart"
     }

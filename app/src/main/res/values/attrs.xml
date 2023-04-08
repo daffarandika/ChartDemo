@@ -2,5 +2,7 @@
 <resources>
     <declare-styleable name="LineChart">
         <attr name="equalizeXAxis" format="boolean"/>
+        <attr name="plotHorizontalPadding" format="integer"/>
+        <attr name="plotVerticalPadding" format="integer"/>
     </declare-styleable>
 </resources>
