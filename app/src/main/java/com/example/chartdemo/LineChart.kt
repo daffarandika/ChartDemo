@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 
 class LineChart @JvmOverloads constructor(
@@ -15,12 +16,19 @@ class LineChart @JvmOverloads constructor(
     defStyle: Int = 0
 ): View(context, attributeSet, defStyle) {
     private lateinit var line: ChartLine
-//    private var equalizeXAxis: Boolean = context.obtainStyledAttributes(attributeSet, R.styleable.LineChart, defStyle, 0).getBoolean(R.styleable.LineChart.equalize)
+    private var xmlArgs = context.obtainStyledAttributes(
+        attributeSet,
+        R.styleable.LineChart,
+        defStyle,
+        0)
+    private val equalizeXAxis: Boolean = xmlArgs.getBoolean(R.styleable.LineChart_equalizeXAxis, false)
     fun submitLine(line: ChartLine) {
         this.line = line
     }
+    @SuppressLint("DrawAllocation")
     override fun onDraw(canvas: Canvas) {
-        val rect = Rect(0, 0, canvas.width, canvas.width)
+        val rectLength = (width * 0.8f).toInt()
+        val rect = Rect(0, 0, rectLength, rectLength)
         val paint = Paint().apply {
             isAntiAlias = true
             color = Color.BLACK
@@ -32,6 +40,13 @@ class LineChart @JvmOverloads constructor(
             color = Color.GRAY
             style = Paint.Style.STROKE
             strokeWidth = 3f
+        }
+        val lineTransparentPaint = Paint().apply {
+            isAntiAlias = true
+            color = Color.RED
+            alpha = 122
+            style = Paint.Style.STROKE
+            strokeWidth = 1.2f
         }
         val pointStyle = Paint().apply {
             color = Color.RED
@@ -54,29 +69,61 @@ class LineChart @JvmOverloads constructor(
             point.y
         }
 
-        val adjustedLine: ChartLine = ChartLine(line.points.map {oldPoint ->
+        val adjustedLine = ChartLine(line.points.map { oldPoint ->
             ChartPoint(
-                ((maxX - minX) / canvas.width) * 2 * oldPoint.x,
-                ((maxY - minY) / canvas.width) * 2 * oldPoint.y
+                (oldPoint.x / maxX) * rect.width(),
+                kotlin.math.abs((oldPoint.y - maxY) / maxY) * rect.width(),
             )
         })
 
-//        val plotStartX = 100f
-//        val plotWidth = canvas.width - 50f
-        for (i in 0 until adjustedLine.points.size - 1) {
-            val point = adjustedLine.points[i]
-            val nextPoint = adjustedLine.points[i+1]
-            canvas.drawLine(
-                point.x,
-                point.y,
-                nextPoint.x,
-                nextPoint.y,
-                linePaint)
-//            canvas.drawCircle((plotWidth / (line.points.size.toFloat() - 1)) * (i) + plotStartX, point.y, 5f, pointStyle)
-//            if (i == line.points.size - 1) {
-//                canvas.drawCircle((plotWidth / (line.points.size.toFloat() - 3)) * (i) + plotStartX, nextPoint.y, 5f, pointStyle)
-//            }
+        if (equalizeXAxis) {
+            for (i in 0 until adjustedLine.points.size - 1) {
+                val point = adjustedLine.points[i]
+                val nextPoint = adjustedLine.points[i+1]
+                Log.e(TAG, "val $i / ${adjustedLine.points.size} * $rectLength", )
+                Log.e(TAG, "onDraw start: ${((i * rectLength)/adjustedLine.points.size).toFloat()}", )
+                canvas.drawLine(
+                    ((i * rectLength).toFloat()/(adjustedLine.points.size - 1)),
+                    0f,
+                    ((i * rectLength).toFloat()/(adjustedLine.points.size - 1)),
+                    rectLength.toFloat(),
+                    lineTransparentPaint
+                )
+                canvas.drawLine(
+                    ((i * rectLength).toFloat()/(adjustedLine.points.size - 1)),
+                    point.y,
+                    (((i + 1)* rectLength).toFloat()/(adjustedLine.points.size - 1)),
+                    nextPoint.y,
+                    linePaint)
+            }
+        } else {
+            for (i in 0 until adjustedLine.points.size - 1) {
+                val point = adjustedLine.points[i]
+                val nextPoint = adjustedLine.points[i+1]
+                canvas.drawLine(
+                    point.x,
+                    point.y,
+                    nextPoint.x,
+                    nextPoint.y,
+                    linePaint)
+                canvas.drawLine(
+                    ((i * rectLength).toFloat()/(adjustedLine.points.size - 1)),
+                    0f,
+                    ((i * rectLength).toFloat()/(adjustedLine.points.size - 1)),
+                    rectLength.toFloat(),
+                    lineTransparentPaint
+                )
+            }
         }
         canvas.drawRect(rect, pointStyle)
+        canvas.drawCircle(
+            ((1 * rectLength)/adjustedLine.points.size).toFloat(),
+            ((1 * rectLength)/2).toFloat(),
+            10f,
+            pointStyle
+        )
+    }
+    companion object {
+        private const val TAG = "LineChart"
     }
 }
