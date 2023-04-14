@@ -7,15 +7,10 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.Rect
 import android.util.AttributeSet
 import android.util.Log
-import android.view.DragEvent
 import android.view.MotionEvent
 import android.view.View
-import android.widget.Toast
-import androidx.constraintlayout.widget.ConstraintSet.Motion
-import kotlin.math.round
 
 class LineChart @JvmOverloads constructor(
     context: Context,
@@ -36,31 +31,6 @@ class LineChart @JvmOverloads constructor(
     }
     @SuppressLint("DrawAllocation")
     override fun onDraw(canvas: Canvas) {
-        val rectLength = (width * 0.8f).toInt()
-        val rect = Rect(0, 0, rectLength, rectLength)
-        val paint = Paint().apply {
-            isAntiAlias = true
-            color = Color.BLACK
-            style = Paint.Style.STROKE
-            strokeWidth = 5f
-        }
-        val linePaint = Paint().apply {
-            isAntiAlias = true
-            color = Color.GRAY
-            style = Paint.Style.STROKE
-            strokeWidth = 3f
-        }
-        val lineTransparentPaint = Paint().apply {
-            isAntiAlias = true
-            color = Color.RED
-            alpha = 122
-            style = Paint.Style.STROKE
-            strokeWidth = 1.2f
-        }
-        val pointStyle = Paint().apply {
-            color = Color.RED
-            style = Paint.Style.STROKE
-        }
 
         val minX = line.points.minOf{ point ->
             point.x
@@ -78,61 +48,63 @@ class LineChart @JvmOverloads constructor(
             point.y
         }
 
-        val adjustedLine = ChartLine(line.points.map { oldPoint ->
-            ChartPoint(
-                (oldPoint.x / maxX) * rect.width(),
-                kotlin.math.abs((oldPoint.y - maxY) / maxY) * rect.width(),
-            )
-        })
-
-        if (touchX != null) {
-            canvas.drawLine(
-                touchX!!,
-                0f,
-                touchX!!,
-                rectLength.toFloat(),
-                lineTransparentPaint
-            )
-            Log.e(TAG, "cok touchX: $touchX", )
-            Log.e(TAG, "cok touchX: $touchX line X vals: ${
-                List(line.points.size) { index ->
-                    ((index * rectLength).toFloat()/(adjustedLine.points.size - 1))
-                }
-            }")
-            if (round(touchX!!) in List(adjustedLine.points.size) { index ->
-                    round(((index * rectLength).toFloat()/(adjustedLine.points.size - 1)))
-            }) {
-//                canvas.drawCircle(
-//                    touchX!!,
-////                    line.points.any {
-////                        (round(it.x) == round(touchX!!))
-////                    },
-//                    10f,
-//                    pointStyle
-//                )
-                //TODO: touch at index
-                Log.e(TAG, "onDraw: yes", )
-                canvas.drawCircle(
-                    touchX!!,
-                    touchX!!,
-                    10f,
-                    pointStyle
-                )
-            }
+        val axisPaint = Paint().apply {
+            color = Color.BLACK
+            textAlign = Paint.Align.CENTER
+            strokeWidth = 8f
         }
 
+        val textPaint = Paint().apply {
+            color = Color.RED
+            textAlign = Paint.Align.CENTER
+        }
+
+        // draw axis
+        val xUnit = width / (line.points.size + 2)
+        val yUnit = height / (line.points.size + 2)
+
+        // y axis
+        canvas.drawLine(
+            10f,
+            10f,
+            10f,
+            (height - yUnit).toFloat(),
+            axisPaint
+        )
+
+        // x axis
+        canvas.drawLine(
+            10f,
+            (height - yUnit).toFloat(),
+            (width - xUnit).toFloat(),
+            (height - yUnit).toFloat(),
+            axisPaint
+        )
+
+        // draw graph
+        val adjustedLine = ChartLine(line.points.map { oldPoint ->
+            ChartPoint(
+                (oldPoint.x / maxX) * (width - yUnit),
+                kotlin.math.abs((oldPoint.y - maxY) / maxY) * (width - yUnit),
+            )
+        })
+        val linePaint = Paint().apply {
+            color = Color.RED
+            strokeWidth = 5f
+        }
         if (equalizeXAxis) {
             for (i in 0 until adjustedLine.points.size - 1) {
                 val point = adjustedLine.points[i]
                 val nextPoint = adjustedLine.points[i+1]
-                Log.e(TAG, "val $i / ${adjustedLine.points.size} * $rectLength", )
-                Log.e(TAG, "onDraw start: ${((i * rectLength)/adjustedLine.points.size).toFloat()}", )
+                Log.e(TAG, "val $i / ${adjustedLine.points.size} * $width")
+                Log.e(TAG, "onDraw start: ${((i * width))})")
                 canvas.drawLine(
-                    ((i * rectLength).toFloat()/(adjustedLine.points.size - 1)),
+                    ((i * width).toFloat()/(adjustedLine.points.size - 10)),
                     point.y,
-                    (((i + 1)* rectLength).toFloat()/(adjustedLine.points.size - 1)),
+                    (((i + 1)* width).toFloat()/(adjustedLine.points.size - 10)),
                     nextPoint.y,
-                    linePaint)
+                    linePaint
+                )
             }
         } else {
             for (i in 0 until adjustedLine.points.size - 1) {
@@ -143,10 +115,10 @@ class LineChart @JvmOverloads constructor(
                     point.y,
                     nextPoint.x,
                     nextPoint.y,
-                    linePaint)
+                    linePaint
+                )
             }
         }
-        canvas.drawRect(rect, pointStyle)
     }
 
     @SuppressLint("ClickableViewAccessibility")
